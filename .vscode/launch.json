@@ -7,8 +7,9 @@
       "name": "Launch Client",
       "runtimeExecutable": "${execPath}",
       "args": [
-        "--extensionDevelopmentPath=${workspaceRoot}"
-        // "--disable-extensions"
+        "--extensionDevelopmentPath=${workspaceRoot}",
+        "--disable-extensions",
+        "${workspaceRoot}/fixture"
       ],
       "outFiles": ["${workspaceRoot}/client/out/**/*.js"],
       "preLaunchTask": "tasks: dev"
@@ -20,8 +21,7 @@
       "runtimeExecutable": "${execPath}",
       "args": [
         "--extensionDevelopmentPath=${workspaceRoot}",
-        "--extensionTestsPath=${workspaceRoot}/out/test/index",
-        "${workspaceRoot}/client/testFixture"
+        "${workspaceRoot}/fixture"
       ]
     }
   ]

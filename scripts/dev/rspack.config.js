@@ -1,6 +1,7 @@
+const rspack = require('@rspack/core')
+const refreshPlugin = require('@rspack/plugin-react-refresh')
+const isDev = process.env.NODE_ENV === 'development'
 const { resolve } = require('path')
-const { HotModuleReplacementPlugin } = require('webpack')
-const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin')
 
 const devServerClientOptions = {
   hot: true,
@@ -37,28 +38,30 @@ module.exports = {
       {
         test: /\.(js|jsx|mjs|cjs|ts|tsx|mts|cts)$/,
         exclude: /(node_modules|bower_components)/,
-        loader: 'swc-loader',
+        loader: 'builtin:swc-loader',
         options: {
+          sourceMap: true,
           jsc: {
             parser: {
-              tsx: true,
               syntax: 'typescript',
-              decorators: true
+              tsx: true
             },
-            preserveAllComments: true,
             transform: {
               react: {
-                development: true,
-                refresh: true,
-                runtime: 'automatic'
+                runtime: 'automatic',
+                development: isDev,
+                refresh: isDev
               }
             }
           },
-          isModule: 'unknown',
-          minify: false,
-          sourceMaps: true,
-          exclude: [],
-          inlineSourcesContent: true
+          env: {
+            targets: [
+              'chrome >= 87',
+              'edge >= 88',
+              'firefox >= 78',
+              'safari >= 14'
+            ]
+          }
         }
       },
       {
@@ -76,5 +79,12 @@ module.exports = {
     ]
   },
   devtool: 'eval-source-map',
-  plugins: [new HotModuleReplacementPlugin(), new ReactRefreshWebpackPlugin()]
+  plugins: [
+    new rspack.DefinePlugin({
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
+    }),
+    new rspack.ProgressPlugin({}),
+    new rspack.HotModuleReplacementPlugin({}),
+    isDev ? new refreshPlugin() : null
+  ]
 }

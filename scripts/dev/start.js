@@ -1,10 +1,9 @@
-const webpack = require('webpack')
-const WebpackDevServer = require('webpack-dev-server')
+const { RspackDevServer } = require('@rspack/dev-server')
+const rspack = require('@rspack/core')
+const devConfig = require('./rspack.config')
 
-const devConfig = require('./webpack.config')
-
-function start() {
-  const compiler = webpack(devConfig)
+async function start() {
+  const compiler = rspack(devConfig)
   const devServerOptions = {
     hot: false,
     client: false,
@@ -20,8 +19,8 @@ function start() {
       'Access-Control-Allow-Origin': '*'
     }
   }
-  const server = new WebpackDevServer(devServerOptions, compiler)
-  server.start()
+  const server = new RspackDevServer(devServerOptions, compiler)
+  await server.start()
 }
 
 start()
