@@ -9,7 +9,15 @@
         "panel": "dedicated",
         "reveal": "never"
       },
-      "problemMatcher": []
+      "problemMatcher": [
+        {
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "Build start",
+            "endsPattern": "Build success"
+          }
+        }
+      ]
     },
     {
       "type": "npm",
@@ -23,7 +31,15 @@
         "panel": "dedicated",
         "reveal": "never"
       },
-      "problemMatcher": []
+      "problemMatcher": [
+        {
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "Build start",
+            "endsPattern": "Build success"
+          }
+        }
+      ]
     }
   ]
 }
