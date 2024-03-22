@@ -27,7 +27,7 @@ import type {
   Diff,
 } from '../types'
 import { parentPort, streamedPromise } from './common'
-import { buildCommand, splitByHighLightToken } from './search'
+import { buildSgRunCommand, splitByHighLightToken } from './search'
 import path from 'node:path'
 
 const SCHEME = 'sgpreview'
@@ -236,7 +236,7 @@ async function refreshSearchResult(
   fileUri: Uri,
   query: SearchQuery,
 ) {
-  const command = buildCommand({
+  const command = buildSgRunCommand({
     pattern: query.inputValue,
     rewrite: query.rewrite,
     includeFiles: [query.includeFile],

@@ -4,6 +4,7 @@ import { type ChildProcessWithoutNullStreams, spawn } from 'node:child_process'
 
 import { parentPort, resolveBinary, streamedPromise } from './common'
 import type { SgSearch, DisplayResult, SearchQuery } from '../types'
+import type { VersionedTextDocumentIdentifier } from 'vscode-languageclient'
 
 /**
  * Set up search query handling and search commands
@@ -11,12 +12,13 @@ import type { SgSearch, DisplayResult, SearchQuery } from '../types'
 export function activateSearch(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand('ast-grep.searchInFolder', findInFolder),
+    commands.registerCommand('ast-grep.executeAutofix', replaceInOpenFile),
   )
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: todo
 function findInFolder(data: any) {
-  const workspacePath = workspace.workspaceFolders?.[0].uri.fsPath
+  const workspacePath = workspace.workspaceFolders?.[0]?.uri?.fsPath
   // compute relative path to the workspace folder
   const relative = workspacePath && path.relative(workspacePath, data.fsPath)
   if (!relative) {
@@ -26,6 +28,21 @@ function findInFolder(data: any) {
   commands.executeCommand('ast-grep.search.input.focus')
   parentPort.postMessage('setIncludeFile', {
     includeFile: relative,
+  })
+}
+
+function replaceInOpenFile() {
+  const textEditor = window.activeTextEditor
+  if (!textEditor) {
+    return
+  }
+  const textDocument: VersionedTextDocumentIdentifier = {
+    uri: textEditor.document.uri.toString(),
+    version: textEditor.document.version,
+  }
+
+  buildSgScanCommand({
+    includeFiles: [textDocument.uri],
   })
 }
 
@@ -106,14 +123,14 @@ async function uniqueCommand(
   }
 }
 
-interface CommandArgs {
+interface SgRunCommandArgs {
   pattern: string
   rewrite?: string
   includeFiles: string[]
 }
 
 // TODO: add unit test for commandBuilder
-export function buildCommand(query: CommandArgs) {
+export function buildSgRunCommand(query: SgRunCommandArgs) {
   const { pattern, includeFiles, rewrite } = query
   if (!pattern) {
     return
@@ -133,13 +150,32 @@ export function buildCommand(query: CommandArgs) {
   })
 }
 
+interface SgScanCommandArgs {
+  includeFiles: string[]
+}
+
+export function buildSgScanCommand(query: SgScanCommandArgs) {
+  const { includeFiles } = query
+
+  const command = resolveBinary()
+  const uris = workspace.workspaceFolders?.map(i => i.uri?.fsPath) ?? []
+  const args = ['scan', '--update-all']
+  args.push(...includeFiles.filter(Boolean))
+  console.debug('running', query, command, args)
+  // TODO: multi-workspaces support
+  return spawn(command, args, {
+    cwd: uris[0],
+    shell: process.platform === 'win32', // it is safe because it is end user input
+  })
+}
+
 interface Handlers {
   onData: StreamingHandler
   onError: (e: Error) => void
 }
 
 function getPatternRes(query: SearchQuery, handlers: Handlers) {
-  const proc = buildCommand({
+  const proc = buildSgRunCommand({
     pattern: query.inputValue,
     includeFiles: [query.includeFile],
     rewrite: query.rewrite,
